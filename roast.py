@@ -81,13 +81,21 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_error_handler(error_handler)
     
-    # Start webhook
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=PORT,
-        url_path=API_KEY,
-        webhook_url=f"https://your-app-name.onrender.com/{API_KEY}"
-    )
+    # Get the webhook URL from environment variable (set in Render)
+    webhook_url = os.environ.get('RENDER_EXTERNAL_URL', '')
+    if webhook_url:
+        # Use webhook in production
+        webhook_url = f"{webhook_url}/{API_KEY}"
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=PORT,
+            url_path=API_KEY,
+            webhook_url=webhook_url,
+            secret_token='SOME_SECRET_TOKEN'  # Optional but recommended
+        )
+    else:
+        # Use polling for local development
+        application.run_polling()
 
 if __name__ == "__main__":
     main()
